@@ -1,10 +1,9 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { randomUUID } from "crypto";
-import { todos } from "../store/todo.store";
-import { inputTodoSchema, PatchTodoSchema } from "../schema/todo.schema";
-import type { Todo } from "../types/todo.types";
-
+import { todos } from "../store/todo.store.js";
+import { inputTodoSchema, PatchTodoSchema } from "../schema/todo.schema.js";
+import type { Todo } from "../types/todo.types.js";
 const routes = new Hono();
 
 routes.get("/", (c) => {
