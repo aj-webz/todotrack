@@ -14,15 +14,15 @@ import {
   deleteTodo,
 } from "@/services/todo.api";
 
-
 export function useTodoQuery() {
   return useQuery<Todo[]>({
     queryKey: queryKey.all,
     queryFn: readTodos,
     staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
-
 
 export function useCreateTodo() {
   const queryClient = useQueryClient();
@@ -31,8 +31,6 @@ export function useCreateTodo() {
     mutationFn: (input: CreateTodoInput) => createTodo(input),
 
     onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: queryKey.all });
-
       const previousTodos =
         queryClient.getQueryData<Todo[]>(queryKey.all) ?? [];
 
@@ -56,12 +54,9 @@ export function useCreateTodo() {
     onError: (_err, _input, context) => {
       queryClient.setQueryData(queryKey.all, context?.previousTodos);
     },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKey.all });
-    },
   });
 }
+
 
 export function useUpdateTodoStatus() {
   const queryClient = useQueryClient();
@@ -76,8 +71,6 @@ export function useUpdateTodoStatus() {
     }) => updateTodoStatus(id, status),
 
     onMutate: async ({ id, status }) => {
-      await queryClient.cancelQueries({ queryKey: queryKey.all });
-
       const previousTodos =
         queryClient.getQueryData<Todo[]>(queryKey.all);
 
@@ -95,13 +88,8 @@ export function useUpdateTodoStatus() {
     onError: (_err, _vars, context) => {
       queryClient.setQueryData(queryKey.all, context?.previousTodos);
     },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKey.all });
-    },
   });
 }
-
 
 export function useDeleteTodo() {
   const queryClient = useQueryClient();
@@ -110,8 +98,6 @@ export function useDeleteTodo() {
     mutationFn: (id: string) => deleteTodo(id),
 
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: queryKey.all });
-
       const previousTodos =
         queryClient.getQueryData<Todo[]>(queryKey.all);
 
@@ -124,10 +110,6 @@ export function useDeleteTodo() {
 
     onError: (_err, _id, context) => {
       queryClient.setQueryData(queryKey.all, context?.previousTodos);
-    },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKey.all });
     },
   });
 }
