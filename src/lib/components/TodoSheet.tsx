@@ -31,9 +31,7 @@ import {
 import { useCreateTodo } from "@/queries/todo.queries";
 
 const CreateTodoFormSchema = z.object({
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters"),
+  title: z.string().min(3, "Title must be at least 3 characters"),
   description: z
     .string()
     .min(10, "Description must be at least 10 characters"),
@@ -41,6 +39,7 @@ const CreateTodoFormSchema = z.object({
 });
 
 type FormValues = z.infer<typeof CreateTodoFormSchema>;
+
 
 export function CreateTodoSheet() {
   const createTodo = useCreateTodo();
@@ -65,7 +64,10 @@ export function CreateTodoSheet() {
       {
         onSuccess: () => {
           form.reset();
-          setOpen(false);
+
+          setTimeout(() => {
+            setOpen(false);
+          }, 0);
         },
       }
     );
@@ -89,10 +91,13 @@ export function CreateTodoSheet() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col gap-6"
         >
-
+          {/* Title */}
           <div className="grid gap-2">
             <Label>Title</Label>
-            <Input placeholder="Assign the task" {...form.register("title")} />
+            <Input
+              placeholder="Assign the task"
+              {...form.register("title")}
+            />
             {form.formState.errors.title && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.title.message}
@@ -100,7 +105,7 @@ export function CreateTodoSheet() {
             )}
           </div>
 
-
+       
           <div className="grid gap-2">
             <Label>Description</Label>
             <Textarea
@@ -114,7 +119,6 @@ export function CreateTodoSheet() {
               </p>
             )}
           </div>
-
 
           <div className="grid gap-2">
             <Label>End Date</Label>
@@ -146,10 +150,7 @@ export function CreateTodoSheet() {
           </div>
 
           <SheetFooter className="mt-auto gap-2">
-            <Button
-              type="submit"
-              disabled={createTodo.isPending}
-            >
+            <Button type="submit" disabled={createTodo.isPending}>
               {createTodo.isPending ? "Creating..." : "Create"}
             </Button>
 
