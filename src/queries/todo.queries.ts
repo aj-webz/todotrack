@@ -18,10 +18,10 @@ import {
 export function useTodoQuery() {
   return useQuery<Todo[]>({
     queryKey: queryKey.all,
-    queryFn: readTodos, 
+    queryFn: readTodos,
     staleTime: Infinity,
-    gcTime: Infinity,              
-    refetchOnMount: false,         
+    gcTime: Infinity,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
@@ -74,19 +74,25 @@ export function useUpdateTodoStatus() {
     }) => updateTodoStatus(id, status),
 
     onMutate: ({ id, status }) => {
+
       const previousTodos =
         queryClient.getQueryData<Todo[]>(queryKey.all);
 
       queryClient.setQueryData<Todo[]>(queryKey.all, (old) =>
         old?.map((todo) =>
           todo.id === id
-            ? { ...todo, status, completed: status === "completed" }
+            ? {
+              ...todo,
+              status,
+              completed: status === "completed",
+            }
             : todo
         )
       );
 
       return { previousTodos };
     },
+
 
     onError: (_err, _vars, context) => {
       queryClient.setQueryData(queryKey.all, context?.previousTodos);
