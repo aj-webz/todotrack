@@ -18,6 +18,9 @@ import {
   useDeleteTodo,
 } from "@/queries/todo.queries";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKey } from "@/queries/querykey";
+
 const statusColumn: {
   id: TodoStatus;
   label: string;
@@ -44,7 +47,8 @@ const statusColumn: {
 export const KanbanBoard = () => {
   const { data: todos = [] } = useTodoQuery();
   const updateTodoStatus = useUpdateTodoStatus();
-  const { isPending } = updateTodoStatus;
+  const deleteTodo = useDeleteTodo();
+  const queryClient = useQueryClient();
 
   const todosByStatus = statusColumn.reduce(
     (acc, col) => {
@@ -57,19 +61,34 @@ export const KanbanBoard = () => {
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
-    const sourceStatus = result.source.droppableId;
-    const destStatus = result.destination.droppableId;
+    const sourceStatus = result.source.droppableId as TodoStatus;
+    const destStatus = result.destination.droppableId as TodoStatus;
 
     if (sourceStatus === destStatus) return;
 
     const todoId = result.draggableId.replace("todo-", "");
-    const newStatus = destStatus as TodoStatus;
 
-    updateTodoStatus.mutate({ id: todoId, status: newStatus });
+
+    queryClient.setQueryData<Todo[]>(queryKey.all, (old = []) =>
+      old.map((todo) =>
+        todo.id === todoId
+          ? {
+              ...todo,
+              status: destStatus,
+              completed: destStatus === "completed",
+            }
+          : todo
+      )
+    );
+
+    updateTodoStatus.mutate({
+      id: todoId,
+      status: destStatus,
+    });
   };
 
   return (
-    <DragDropContext onDragEnd={isPending ? () => {} : onDragEnd}>
+    <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex gap-5 overflow-x-auto pb-4 md:grid md:grid-cols-2 md:overflow-visible">
         {statusColumn.map((column) => (
           <Card
@@ -93,23 +112,59 @@ export const KanbanBoard = () => {
             </CardHeader>
 
             <Droppable droppableId={column.id}>
-              {(provided, snapshot) => (
+              {(provided) => (
                 <CardContent
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={cn(
-                    "flex-1 space-y-4 p-4 overflow-y-auto transition-colors",
-                    snapshot.isDraggingOver &&
-                      "bg-linear-to-b from-neutral-50 to-neutral-100"
-                  )}
+                  className="flex-1 space-y-4 p-4 overflow-y-auto"
                 >
                   {todosByStatus[column.id].map((todo, index) => (
-                    <TodoCard
+                    <Draggable
                       key={todo.id}
-                      todo={todo}
+                      draggableId={`todo-${todo.id}`}
                       index={index}
-                      borderColor={column.borderColor}
-                    />
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                        >
+                          <Card
+                            className={cn(
+                              "relative bg-white rounded-lg shadow-sm border-l-4",
+                              column.borderColor
+                            )}
+                          >
+                            <CardContent className="p-4 space-y-3 text-sm">
+                              <div className="flex justify-between">
+                                <h3 className="font-semibold">
+                                  {todo.title}
+                                </h3>
+                                <Badge>
+                                  {todo.status}
+                                </Badge>
+                              </div>
+
+                              <p>{todo.description}</p>
+
+                              <div className="text-xs text-neutral-500">
+                                Created:{" "}
+                                {format(new Date(todo.created), "dd MMM yyyy")}
+                              </div>
+
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteTodo.mutate(todo.id)}
+                              >
+                                Delete
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )}
+                    </Draggable>
                   ))}
                   {provided.placeholder}
                 </CardContent>
@@ -119,84 +174,5 @@ export const KanbanBoard = () => {
         ))}
       </div>
     </DragDropContext>
-  );
-};
-
-const TodoCard = ({
-  todo,
-  index,
-  borderColor,
-}: {
-  todo: Todo;
-  index: number;
-  borderColor: string;
-}) => {
-  const deleteTodo = useDeleteTodo();
-
-  return (
-    <Draggable draggableId={`todo-${todo.id}`} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={cn(
-            "transition-all",
-            snapshot.isDragging && "rotate-1 scale-[1.03]"
-          )}
-        >
-          <Card
-            className={cn(
-              "relative bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border-l-4",
-              borderColor,
-              snapshot.isDragging && "shadow-xl"
-            )}
-          >
-            <CardContent className="p-4 space-y-3 text-sm">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-semibold leading-snug line-clamp-2">
-                  {todo.title}
-                </h3>
-                <Badge
-                  className={cn(
-                    "text-[10px] capitalize",
-                    todo.status === "completed"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-blue-100 text-blue-700"
-                  )}
-                >
-                  {todo.status}
-                </Badge>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-neutral-500">
-                <span>
-                  Created:{" "}
-                  {format(new Date(todo.created), "dd MMM yyyy")}
-                </span>
-                {todo.endDate && (
-                  <span>
-                    End: {format(new Date(todo.endDate), "dd MMM yyyy")}
-                  </span>
-                )}
-              </div>
-
-              <p className="text-sm text-neutral-700 line-clamp-3">
-                {todo.description}
-              </p>
-
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full sm:w-fit"
-                onClick={() => deleteTodo.mutate(todo.id)}
-              >
-                Delete
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </Draggable>
   );
 };
