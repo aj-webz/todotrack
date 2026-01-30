@@ -12,13 +12,11 @@ import { cn } from "@/lib/utils";
 
 import type { Todo, TodoStatus } from "@/store/todo/todo.types";
 
-
 import {
   useTodoQuery,
-  useUpdateTodoStatus,useDeleteTodo
+  useUpdateTodoStatus,
+  useDeleteTodo,
 } from "@/queries/todo.queries";
-
-
 
 const statusColumn: {
   id: TodoStatus;
@@ -43,12 +41,10 @@ const statusColumn: {
   },
 ];
 
-
-
 export const KanbanBoard = () => {
   const { data: todos = [] } = useTodoQuery();
   const updateTodoStatus = useUpdateTodoStatus();
-
+  const { isPending } = updateTodoStatus;
 
   const todosByStatus = statusColumn.reduce(
     (acc, col) => {
@@ -61,32 +57,24 @@ export const KanbanBoard = () => {
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
-    const newStatus = result.destination.droppableId as TodoStatus;
-    const todoId = result.draggableId.replace("todo-", "");
+    const sourceStatus = result.source.droppableId;
+    const destStatus = result.destination.droppableId;
 
-    updateTodoStatus.mutate({
-      id: todoId,
-      status: newStatus,
-    });
+    if (sourceStatus === destStatus) return;
+
+    const todoId = result.draggableId.replace("todo-", "");
+    const newStatus = destStatus as TodoStatus;
+
+    updateTodoStatus.mutate({ id: todoId, status: newStatus });
   };
-const  {isPending} = useUpdateTodoStatus();
+
   return (
     <DragDropContext onDragEnd={isPending ? () => {} : onDragEnd}>
-      <div
-        className="
-          flex gap-5 overflow-x-auto pb-4
-          md:grid md:grid-cols-2 md:overflow-visible
-        "
-      >
+      <div className="flex gap-5 overflow-x-auto pb-4 md:grid md:grid-cols-2 md:overflow-visible">
         {statusColumn.map((column) => (
           <Card
             key={column.id}
-            className="
-              flex flex-col bg-white rounded-xl
-              min-w-[90vw] sm:min-w-[70vw]
-              md:min-w-0
-              shadow-sm border
-            "
+            className="flex flex-col bg-white rounded-xl min-w-[90vw] sm:min-w-[70vw] md:min-w-0 shadow-sm border"
           >
             <CardHeader
               className={cn(
@@ -97,10 +85,7 @@ const  {isPending} = useUpdateTodoStatus();
               <CardTitle className="flex items-center justify-between text-sm md:text-xl font-semibold">
                 {column.label}
                 <span
-                  className={cn(
-                    "text-xs p-2 rounded-sm",
-                    column.badgeColor
-                  )}
+                  className={cn("text-xs p-2 rounded-sm", column.badgeColor)}
                 >
                   {todosByStatus[column.id].length}
                 </span>
@@ -114,13 +99,12 @@ const  {isPending} = useUpdateTodoStatus();
                   {...provided.droppableProps}
                   className={cn(
                     "flex-1 space-y-4 p-4 overflow-y-auto transition-colors",
-                    "max-h-[70vh] md:max-h-none",
                     snapshot.isDraggingOver &&
                       "bg-linear-to-b from-neutral-50 to-neutral-100"
                   )}
                 >
                   {todosByStatus[column.id].map((todo, index) => (
-                    <DraggableTodo
+                    <TodoCard
                       key={todo.id}
                       todo={todo}
                       index={index}
@@ -138,9 +122,7 @@ const  {isPending} = useUpdateTodoStatus();
   );
 };
 
-
-
-const DraggableTodo = ({
+const TodoCard = ({
   todo,
   index,
   borderColor,
@@ -149,7 +131,7 @@ const DraggableTodo = ({
   index: number;
   borderColor: string;
 }) => {
-  const deleteTodo = useDeleteTodo()
+  const deleteTodo = useDeleteTodo();
 
   return (
     <Draggable draggableId={`todo-${todo.id}`} index={index}>
@@ -189,7 +171,8 @@ const DraggableTodo = ({
 
               <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-neutral-500">
                 <span>
-                  Created: {format(new Date( todo.created), "dd MMM yyyy")}
+                  Created:{" "}
+                  {format(new Date(todo.created), "dd MMM yyyy")}
                 </span>
                 {todo.endDate && (
                   <span>
