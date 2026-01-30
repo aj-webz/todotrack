@@ -14,11 +14,14 @@ import {
   deleteTodo,
 } from "@/services/todo.api";
 
+
 export function useTodoQuery() {
   return useQuery<Todo[]>({
     queryKey: queryKey.all,
-    queryFn: readTodos,
+    queryFn: readTodos, 
     staleTime: Infinity,
+    gcTime: Infinity,              
+    refetchOnMount: false,         
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
@@ -30,7 +33,7 @@ export function useCreateTodo() {
   return useMutation({
     mutationFn: (input: CreateTodoInput) => createTodo(input),
 
-    onMutate: async (input) => {
+    onMutate: (input) => {
       const previousTodos =
         queryClient.getQueryData<Todo[]>(queryKey.all) ?? [];
 
@@ -70,7 +73,7 @@ export function useUpdateTodoStatus() {
       status: TodoStatus;
     }) => updateTodoStatus(id, status),
 
-    onMutate: async ({ id, status }) => {
+    onMutate: ({ id, status }) => {
       const previousTodos =
         queryClient.getQueryData<Todo[]>(queryKey.all);
 
@@ -91,13 +94,14 @@ export function useUpdateTodoStatus() {
   });
 }
 
+
 export function useDeleteTodo() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: string) => deleteTodo(id),
 
-    onMutate: async (id) => {
+    onMutate: (id) => {
       const previousTodos =
         queryClient.getQueryData<Todo[]>(queryKey.all);
 
