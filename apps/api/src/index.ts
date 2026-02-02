@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { serve } from "@hono/node-server";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
@@ -11,10 +10,9 @@ import {
   type Todo,
 } from "@repo/shared";
 
-import { todos } from "./todo.store.js";
+import { todos } from "./todo.store.js"; 
 
 const app = new Hono();
-
 
 app.use(
   "/*",
@@ -24,6 +22,7 @@ app.use(
     allowHeaders: ["Content-Type"],
   })
 );
+
 
 app.options("*", (c) => c.body(null, 204));
 
@@ -49,7 +48,6 @@ app.post("/", async (c) => {
   todos.push(todo);
   return c.json(todo, 201);
 });
-
 
 const UpdateStatusSchema = z.object({
   status: TodoStatusSchema,
@@ -84,9 +82,4 @@ app.delete("/:id", (c) => {
 });
 
 
-serve({
-  fetch: app.fetch,
-  port: 4000,
-});
-
-console.log(" API running on http://localhost:4000");
+export default app;
