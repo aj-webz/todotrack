@@ -5,7 +5,7 @@ import type {
 } from "@repo/shared";
 
 //const baseUrl = "https://backend-ten-zeta-54.vercel.app";
-const baseUrl = "http://localhost:4000"
+const baseUrl = "https://todotrack-api.vercel.app"
 
 export async function readTodos(): Promise<Todo[]> {
   try {

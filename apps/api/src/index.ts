@@ -5,7 +5,7 @@ import { Todo, TodoStatus } from "@repo/shared";
 
 const app = new Hono();
 
-app.use("*",cors({ origin: ["http://localhost:3000","https://backend-ten-zeta-54.vercel.app"], allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],allowHeaders: ["Content-Type"],}));
+app.use("*",cors({ origin: ["http://localhost:3000","https://todotrack-web.vercel.app"], allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],allowHeaders: ["Content-Type"],}));
 
 app.options("*",(c)=>{return c.body(null,202)})
 const routes = new Hono();
