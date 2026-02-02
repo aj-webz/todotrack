@@ -5,7 +5,7 @@ import {
   type TodoStatus,
 } from "@repo/shared";
 
-const baseUrl = "http://localhost:4000";
+const baseUrl = "https://todotrack-api.vercel.app";
 
 export async function readTodos(): Promise<Todo[]> {
   const res = await fetch(baseUrl);
