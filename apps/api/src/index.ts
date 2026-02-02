@@ -10,7 +10,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://todotrack-web.vercel.app",
+      "https://todotrack-web.vercel.app", "https://todotrack-web.vercel.app/"
     ],
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
