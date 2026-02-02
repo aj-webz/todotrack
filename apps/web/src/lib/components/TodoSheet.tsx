@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, Plus } from "lucide-react";
+import type { SubmitHandler } from "react-hook-form";
 
 import {
   Sheet,
@@ -29,24 +30,17 @@ import {
 } from "@/components/ui/popover";
 
 import { useCreateTodo } from "@/queries/todo.queries";
+import { CreateTodoSchema } from "@repo/shared";
 
-const CreateTodoFormSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z
-    .string()
-    .min(10, "Description must be at least 10 characters"),
-  endDate: z.date().nullable(),
-});
 
-type FormValues = z.infer<typeof CreateTodoFormSchema>;
-
+type FormValues = z.infer<typeof CreateTodoSchema>;
 
 export function CreateTodoSheet() {
   const createTodo = useCreateTodo();
   const [open, setOpen] = React.useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(CreateTodoFormSchema),
+    resolver: zodResolver(CreateTodoSchema),
     defaultValues: {
       title: "",
       description: "",
@@ -54,7 +48,7 @@ export function CreateTodoSheet() {
     },
   });
 
-  function onSubmit(values: FormValues) {
+  const onSubmit: SubmitHandler<FormValues> = (values) => {
     createTodo.mutate(
       {
         title: values.title,
@@ -64,14 +58,11 @@ export function CreateTodoSheet() {
       {
         onSuccess: () => {
           form.reset();
-
-          setTimeout(() => {
-            setOpen(false);
-          }, 0);
+          setTimeout(() => setOpen(false), 0);
         },
       }
     );
-  }
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -105,7 +96,7 @@ export function CreateTodoSheet() {
             )}
           </div>
 
-       
+          {/* Description */}
           <div className="grid gap-2">
             <Label>Description</Label>
             <Textarea
@@ -120,6 +111,7 @@ export function CreateTodoSheet() {
             )}
           </div>
 
+          {/* End Date */}
           <div className="grid gap-2">
             <Label>End Date</Label>
 
@@ -142,7 +134,9 @@ export function CreateTodoSheet() {
                   mode="single"
                   selected={form.watch("endDate") ?? undefined}
                   onSelect={(date) =>
-                    form.setValue("endDate", date ?? null)
+                    form.setValue("endDate", date ?? null, {
+                      shouldDirty: true,
+                    })
                   }
                 />
               </PopoverContent>

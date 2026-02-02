@@ -1,22 +1,23 @@
 "use client";
 
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import type { DropResult } from "@hello-pangea/dnd";
 import { format } from "date-fns";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
 import { cn } from "@/lib/utils";
 
-import type { Todo,TodoStatus } from "@repo/shared";
-
+import type { Todo, TodoStatus } from "@repo/shared";
 import {
   useTodoQuery,
   useUpdateTodoStatus,
   useDeleteTodo,
 } from "@/queries/todo.queries";
+
+/* ✅ Type guard */
+const isTodoStatus = (value: string): value is TodoStatus =>
+  value === "in-progress" || value === "completed";
 
 const statusColumn: {
   id: TodoStatus;
@@ -54,18 +55,18 @@ export const KanbanBoard = () => {
     {} as Record<TodoStatus, Todo[]>
   );
 
-  const onDragEnd = (result: DropResult) => {
+  const onDragEnd = (result: any) => {
     if (!result.destination) return;
 
     const sourceStatus = result.source.droppableId;
     const destStatus = result.destination.droppableId;
-
     if (sourceStatus === destStatus) return;
+    if (!isTodoStatus(destStatus)) return;
 
     const todoId = result.draggableId.replace("todo-", "");
-    const newStatus = destStatus as TodoStatus;
+    if (!todoId) return;
 
-    updateTodoStatus.mutate({ id: todoId, status: newStatus });
+    updateTodoStatus.mutate({ id: todoId, status: destStatus });
   };
 
   return (
@@ -98,9 +99,8 @@ export const KanbanBoard = () => {
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   className={cn(
-                    "flex-1 space-y-4 p-4 overflow-y-auto transition-colors",
-                    snapshot.isDraggingOver &&
-                      "bg-linear-to-b from-neutral-50 to-neutral-100"
+                    "flex-1 space-y-4 p-4 overflow-y-auto max-h-[70vh] transition-colors",
+                    snapshot.isDraggingOver && "bg-linear-to-b from-neutral-50 to-neutral-100"
                   )}
                 >
                   {todosByStatus[column.id].map((todo, index) => (
@@ -171,8 +171,7 @@ const TodoCard = ({
 
               <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-neutral-500">
                 <span>
-                  Created:{" "}
-                  {format(new Date(todo.created), "dd MMM yyyy")}
+                  Created: {format(new Date(todo.created), "dd MMM yyyy")}
                 </span>
                 {todo.endDate && (
                   <span>

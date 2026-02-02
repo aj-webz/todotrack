@@ -1,39 +1,68 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { serve } from "@hono/node-server";
+import { nanoid } from "nanoid";
+import { z } from "zod";
+
+import {
+  TodoSchema,
+  CreateTodoSchema,
+  TodoStatusSchema,
+  type Todo,
+} from "@repo/shared";
+
 import { todos } from "./todo.store.js";
-import { Todo, TodoStatus } from "@repo/shared";
 
 const app = new Hono();
 
+
 app.use(
-  "*",
+  "/*",
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://todotrack-web.vercel.app", "https://todotrack-web.vercel.app/"
-    ],
+    origin: "*",
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type"],
   })
 );
 
-app.options("*", (c) => { return c.body(null, 204) })
-const routes = new Hono();
+app.options("*", (c) => c.body(null, 204));
 
-routes.get("/", (c) => c.json(todos));
 
-routes.post("/", async (c) => {
-  const data = await c.req.json<Todo>();
-  todos.push(data);
-  return c.json(data, 201);
+app.get("/", (c) => {
+  return c.json(todos);
 });
 
-routes.patch("/:id/status", async (c) => {
+
+app.post("/", async (c) => {
+  const raw = await c.req.json();
+  const data = CreateTodoSchema.parse(raw);
+  const todo: Todo = TodoSchema.parse({
+    id: nanoid(),
+    title: data.title,
+    description: data.description,
+    status: "in-progress",
+    completed: false,
+    created: new Date(),
+    endDate: data.endDate ?? null,
+  });
+
+  todos.push(todo);
+  return c.json(todo, 201);
+});
+
+
+const UpdateStatusSchema = z.object({
+  status: TodoStatusSchema,
+});
+
+app.patch("/:id/status", async (c) => {
   const { id } = c.req.param();
-  const body = await c.req.json<{ status: TodoStatus }>();
+  const body = UpdateStatusSchema.parse(await c.req.json());
 
   const todo = todos.find((t) => t.id === id);
-  if (!todo) return c.json({ message: "Todo not found" }, 404);
+  if (!todo) {
+    return c.json({ message: "Todo not found" }, 404);
+  }
 
   todo.status = body.status;
   todo.completed = body.status === "completed";
@@ -41,14 +70,23 @@ routes.patch("/:id/status", async (c) => {
   return c.json(todo);
 });
 
-routes.delete("/:id", (c) => {
+
+app.delete("/:id", (c) => {
   const { id } = c.req.param();
   const index = todos.findIndex((t) => t.id === id);
-  if (index === -1) return c.json({ message: "Todo not found" }, 404);
+
+  if (index === -1) {
+    return c.json({ message: "Todo not found" }, 404);
+  }
 
   todos.splice(index, 1);
   return c.body(null, 204);
 });
 
-app.route("/api", routes);
-export default app;
+
+serve({
+  fetch: app.fetch,
+  port: 4000,
+});
+
+console.log(" API running on http://localhost:4000");

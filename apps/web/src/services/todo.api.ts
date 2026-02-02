@@ -1,47 +1,42 @@
-import type {
-  Todo,
-  CreateTodoInput,
-  TodoStatus,
+import {
+  TodoSchema,
+  type Todo,
+  type CreateTodoInput,
+  type TodoStatus,
 } from "@repo/shared";
 
-//const baseUrl = "https://backend-ten-zeta-54.vercel.app";
-const baseUrl = "https://todotrack-api.vercel.app/api"
+const baseUrl = "http://localhost:4000";
 
 export async function readTodos(): Promise<Todo[]> {
-  try {
-    const res = await fetch(baseUrl);
+  const res = await fetch(baseUrl);
 
-    if (!res.ok) {
-      throw new Error(`Fetch failed: ${res.status}`);
-    }
-
-    return await res.json();
-  } catch (error) {
-    console.error("readTodos error:", error);
-    throw error;
+  if (!res.ok) {
+    throw new Error(`Fetch failed: ${res.status}`);
   }
+
+  const json = await res.json();
+
+  return TodoSchema.array().parse(json);
 }
 
 
 export async function createTodo(
   input: CreateTodoInput
 ): Promise<Todo> {
-  try {
-    const res = await fetch(baseUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-    });
+  const res = await fetch(baseUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 
-    if (!res.ok) {
-      throw new Error(`Create failed: ${res.status}`);
-    }
-
-    return await res.json();
-  } catch (error) {
-    console.error("createTodo error:", error);
-    throw error;
+  if (!res.ok) {
+    throw new Error(`Create failed: ${res.status}`);
   }
+
+  const json = await res.json();
+
+ 
+  return TodoSchema.parse(json);
 }
 
 
@@ -49,36 +44,27 @@ export async function updateTodoStatus(
   id: string,
   status: TodoStatus
 ): Promise<Todo> {
-  try {
-    const res = await fetch(`${baseUrl}/${id}/status`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
+  const res = await fetch(`${baseUrl}/${id}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
 
-    if (!res.ok) {
-      throw new Error(`Update failed: ${res.status}`);
-    }
-
-    return await res.json();
-  } catch (error) {
-    console.error("updateTodoStatus error:", error);
-    throw error;
+  if (!res.ok) {
+    throw new Error(`Update failed: ${res.status}`);
   }
+
+  const json = await res.json();
+
+  return TodoSchema.parse(json);
 }
 
-
 export async function deleteTodo(id: string): Promise<void> {
-  try {
-    const res = await fetch(`${baseUrl}/${id}`, {
-      method: "DELETE",
-    });
+  const res = await fetch(`${baseUrl}/${id}`, {
+    method: "DELETE",
+  });
 
-    if (!res.ok) {
-      throw new Error(`Delete failed: ${res.status}`);
-    }
-  } catch (error) {
-    console.error("deleteTodo error:", error);
-    throw error;
+  if (!res.ok) {
+    throw new Error(`Delete failed: ${res.status}`);
   }
 }

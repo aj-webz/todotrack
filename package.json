@@ -1,7 +1,7 @@
 {
   "name": "worktracker",
   "version": "1.0.0",
-  "private":true,
+  "private": true,
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "hono": "^4.11.7",
+    "nanoid": "^5.1.6",
     "zod": "^4.3.6"
   }
 }
