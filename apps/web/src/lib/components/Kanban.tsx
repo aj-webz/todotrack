@@ -15,7 +15,7 @@ import {
   useDeleteTodo,
 } from "@/queries/todo.queries";
 
-/* ✅ Type guard */
+
 const isTodoStatus = (value: string): value is TodoStatus =>
   value === "in-progress" || value === "completed";
 
