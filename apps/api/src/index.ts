@@ -14,7 +14,6 @@ import { todos } from "./todo.store";
 
 const app = new Hono();
 
-
 app.use(
   "/*",
   cors({
@@ -24,7 +23,9 @@ app.use(
   })
 );
 
-app.options("*", (c) => c.body(null, 204));
+app.options("*", (c) => {
+  return c.body(null, 204);
+});
 
 
 app.get("/", (c) => {
